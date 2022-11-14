@@ -1,13 +1,14 @@
-package com.example.myapplication.feature_note.domain.model
+package com.example.mynoteapp.feature_note.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.myapplication.ui.theme.*
+import com.example.mynoteapp.ui.theme.*
+import java.lang.Exception
 
 @Entity
 data class Note(
     val title: String,
-    val contents: String,
+    val content: String,
     val timestamp: Long,
     val color: Int,
     @PrimaryKey val id: Int? = null
@@ -16,3 +17,5 @@ data class Note(
         val noteColors = listOf(RedOrange, LightGreen, Violet, BabyBlue, RedPink)
     }
 }
+
+class InvalidNoteException(message: String) : Exception(message)
