@@ -1,12 +1,12 @@
 package com.example.mynoteapp.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorPalette = darkColors(
+private val DarkColorPalette = darkColorScheme(
     primary = Color.White,
     background = DarkGray,
     onBackground = Color.White,
@@ -20,7 +20,7 @@ fun MyApplicationTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colors = DarkColorPalette,
+        colorScheme = DarkColorPalette,
         typography = Typography,
         shapes = Shapes,
         content = content
