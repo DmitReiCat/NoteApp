@@ -3,6 +3,7 @@ package com.example.mynoteapp.feature_note.presentation.add_edit_note.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 
 @Composable
-fun TransparentHintTExtField(
+fun TransparentHintTextField(
     text: String,
     hint: String,
     modifier: Modifier = Modifier,
@@ -35,7 +36,7 @@ fun TransparentHintTExtField(
                 .onFocusChanged { onFocusChange(it) }
         )
         if (isHintVisible) {
-            Text(text = hint, style = textStyle, color = Color.DarkGray)
+            Text(text = hint, style = textStyle, color = Color.Gray)
         }
     }
 }

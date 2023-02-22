@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.mynoteapp.feature_note.domain.model.Note
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.components.TransparentHintTExtField
+import com.example.mynoteapp.feature_note.presentation.add_edit_note.components.TransparentHintTextField
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -108,13 +108,12 @@ fun AddEditNoteScreen(
                                         animationSpec = tween(durationMillis = 500)
                                     )
                                 }
-                                viewModel.onEvent(AddEditNoteEvent.ChangeColor(colorInt))
                             }
                     )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            TransparentHintTExtField(
+            TransparentHintTextField(
                 text = titleState.text,
                 hint = titleState.hint,
                 onValueChange = { viewModel.onEvent(AddEditNoteEvent.EnteredTitle(it)) },
@@ -124,7 +123,7 @@ fun AddEditNoteScreen(
                 textStyle = MaterialTheme.typography.bodySmall
             )
             Spacer(modifier = Modifier.height(16.dp))
-            TransparentHintTExtField(
+            TransparentHintTextField(
                 text = contentState.text,
                 hint = contentState.hint,
                 onValueChange = { viewModel.onEvent(AddEditNoteEvent.EnteredContent(it)) },

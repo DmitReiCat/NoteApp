@@ -83,7 +83,6 @@ class AddEditNoteViewModel @Inject constructor(
                 text = event.value
             )
 
-            is AddEditNoteEvent.ChangeColor -> _noteColor.value = event.color
 
             AddEditNoteEvent.SaveNote -> {
                 viewModelScope.launch {
@@ -94,7 +93,8 @@ class AddEditNoteViewModel @Inject constructor(
                                 content = noteContent.value.text,
                                 timestamp = System.currentTimeMillis(),
                                 color = noteColor.value,
-                                id = currentNoteId
+                                id = currentNoteId,
+                                parentId = noteContent.value.text.toIntOrNull()
                             )
                         )
                         _eventFlow.emit(UiEvent.SaveNote)

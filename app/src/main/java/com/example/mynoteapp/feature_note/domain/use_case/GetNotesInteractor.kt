@@ -12,9 +12,10 @@ class GetNotesInteractor(
 ) {
 
     operator fun invoke(
-        noteOrder: NoteOrder = NoteOrder.Date(OrderType.Descending)
+        noteOrder: NoteOrder = NoteOrder.Date(OrderType.Descending),
+        parentId: Int?
     ): Flow<List<Note>> {
-        return repository.getNotes().map { notes ->
+        return repository.getNotes(parentId).map { notes ->
             when (noteOrder.orderType) {
                 is OrderType.Ascending -> {
                     when (noteOrder) {

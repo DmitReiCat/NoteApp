@@ -12,9 +12,6 @@ class AddNoteInteractor(
         if (note.title.isBlank()) {
             throw InvalidNoteException("Title of the note cannot be empty.")
         }
-        if (note.content.isBlank()) {
-            throw InvalidNoteException("Content of the note cannot be empty.")
-        }
 
         repository.insertNote(note)
     }
