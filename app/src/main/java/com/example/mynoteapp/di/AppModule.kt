@@ -32,9 +32,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNoteUseCases(repository: NoteRepository): NoteUseCases = NoteUseCases(
-        getNotes = GetNotesInteractor(repository),
+        getSubNotes = GetSubNotesInteractor(repository),
         deleteNote = DeleteNoteInteractor(repository),
-        addNote = AddNoteInteractor(repository),
-        getNote = GetNoteInteractor(repository)
+        saveNote = SaveNoteInteractor(repository),
+        getNote = GetNoteInteractor(repository),
+        createNote = CreateNoteInteractor(repository)
     )
 }

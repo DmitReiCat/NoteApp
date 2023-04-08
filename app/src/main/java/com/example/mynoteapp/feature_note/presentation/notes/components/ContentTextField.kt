@@ -5,14 +5,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.NoteTextFieldState
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.components.TransparentHintTextField
+import com.example.mynoteapp.feature_note.presentation.notes.NoteTextFieldState
 
 @Composable
 fun ContentTextField(
     contentState: NoteTextFieldState,
     onValueChange: (String) -> Unit,
-    onFocusChange: (FocusState) -> Unit
+    onFocusChange: (FocusState) -> Unit,
 ) {
     TransparentHintTextField(
         text = contentState.text,
@@ -20,7 +19,7 @@ fun ContentTextField(
         onValueChange = onValueChange,
         onFocusChange = onFocusChange,
         isHintVisible = contentState.isHintVisible,
-        textStyle = MaterialTheme.typography.bodySmall,
-        modifier = Modifier.fillMaxHeight()
+        textStyle = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.fillMaxHeight(),
     )
 }

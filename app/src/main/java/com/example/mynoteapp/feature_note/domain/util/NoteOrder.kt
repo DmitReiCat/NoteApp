@@ -10,6 +10,9 @@ sealed class NoteOrder(val orderType: OrderType) {
         is Color -> Color(orderType)
         is Date -> Date(orderType)
     }
+    companion object {
+        val DEFAULT = Date(OrderType.Descending)
+    }
 }
 
 

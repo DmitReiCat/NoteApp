@@ -8,7 +8,8 @@ sealed class NotesEvent {
     data class DeleteNote(val note: Note): NotesEvent()
     object RestoreNote: NotesEvent()
     object ToggleOrderSection: NotesEvent()
-    data class ChangeParentId(val parentId: Int): NotesEvent()
+    data class ChangeNoteId(val noteId: Long): NotesEvent()
     object OnBackPressed: NotesEvent()
-    data class ToggleBottomSheet(val noteId: Int = -1): NotesEvent()
+    data class ToggleBottomSheet(val noteId: Long = -1): NotesEvent()
+    object CreateNewNote: NotesEvent()
 }

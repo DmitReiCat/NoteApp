@@ -1,6 +1,5 @@
 package com.example.mynoteapp.feature_note.presentation.project
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -10,8 +9,6 @@ import com.example.mynoteapp.feature_note.domain.model.Note
 import com.example.mynoteapp.feature_note.domain.use_case.NoteUseCases
 import com.example.mynoteapp.feature_note.domain.util.NoteOrder
 import com.example.mynoteapp.feature_note.domain.util.OrderType
-import com.example.mynoteapp.feature_note.presentation.notes.NotesEvent
-import com.example.mynoteapp.feature_note.presentation.notes.NotesState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -53,7 +50,7 @@ class ProjectViewModel @Inject constructor(
             }
             ProjectEvent.RestoreNote -> {
                 viewModelScope.launch {
-                    noteUseCases.addNote(recentlyDeletedNote ?: return@launch)
+                    noteUseCases.saveNote(recentlyDeletedNote ?: return@launch)
                     recentlyDeletedNote = null
                 }
             }
@@ -68,9 +65,8 @@ class ProjectViewModel @Inject constructor(
 
     private fun getNotes(noteOrder: NoteOrder) {
         getNotesJob?.cancel()
-        getNotesJob = noteUseCases.getNotes(noteOrder, parentId = null)
+        getNotesJob = noteUseCases.getSubNotes(noteOrder, noteId = null)
             .onEach { notes ->
-                Log.d("NOTE_APP", "got in vm: $notes")
                 _state.value = state.value.copy(
                     notes = notes,
                     noteOrder = noteOrder,

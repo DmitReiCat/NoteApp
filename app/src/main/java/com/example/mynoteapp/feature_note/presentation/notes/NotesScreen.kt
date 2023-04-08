@@ -11,35 +11,32 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.AddEditNoteEvent
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.components.TransparentHintTextField
-import com.example.mynoteapp.feature_note.presentation.destinations.NotesScreenDestination
 import com.example.mynoteapp.feature_note.presentation.notes.components.ContentTextField
 import com.example.mynoteapp.feature_note.presentation.notes.components.NoteItem
 import com.example.mynoteapp.feature_note.presentation.notes.components.OrderSection
 import com.example.mynoteapp.feature_note.presentation.notes.components.TitleTextField
-import com.example.mynoteapp.feature_note.presentation.util.Screen
 import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
 data class NotesScreenNavArgs(
-    val noteId: Int,
-    val parentId: Int
+    val noteId: Long,
+    // TODO(Later will be project ID)
+    val parentId: Long
 )
 
 @Destination(navArgsDelegate = NotesScreenNavArgs::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
     navigator: DestinationsNavigator,
@@ -49,6 +46,13 @@ fun NotesScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val focusManager = LocalFocusManager.current
+    val titleFocusRequester = remember { FocusRequester() }
+
+    val titleState = viewModel.noteTitle.value
+    val contentState = viewModel.noteContent.value
+
+
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -57,20 +61,27 @@ fun NotesScreen(
                         message = event.message
                     )
                 }
+
+                NotesViewModel.UiEvent.RequestTitleFocus -> {
+                    titleFocusRequester.requestFocus()
+                }
             }
         }
     }
 
-//    BackHandler() {
-//        viewModel.onEvent(NotesEvent.OnBackPressed)
-//    }
+
+    BackHandler {
+        focusManager.clearFocus()
+        if (!viewModel.state.value.isTopLevel) viewModel.onEvent(NotesEvent.OnBackPressed)
+        else viewModel.onEvent(AddEditNoteEvent.SaveNote).also { navigator.navigateUp() }
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-//                    viewModel.onEvent(NotesEvent.ChangeParentId(-1))
-//                    navController.navigate(Screen.AddEditNote.route)
+                    focusManager.clearFocus()
+                    viewModel.onEvent(NotesEvent.CreateNewNote)
                 },
                 shape = MaterialTheme.shapes.large,
                 contentColor = MaterialTheme.colorScheme.primary
@@ -90,10 +101,13 @@ fun NotesScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                //TODO(Delete debug property)
                 Text(
                     text = "Your note    parent=${viewModel.state.value.parentId}",
                     style = MaterialTheme.typography.bodyLarge
                 )
+                //TODO(Will be redone in the future as sort and filter menus)
                 IconButton(onClick = { viewModel.onEvent(NotesEvent.ToggleOrderSection) }) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
@@ -101,6 +115,8 @@ fun NotesScreen(
                     )
                 }
             }
+
+            //TODO(Will be redone in the future as sort and filter menus)
             AnimatedVisibility(
                 visible = state.isOrderSelectionVisible,
                 enter = fadeIn() + slideInVertically(),
@@ -120,31 +136,26 @@ fun NotesScreen(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.2f)
+                    .fillMaxHeight(0.2f) // TODO(dont need this modifier for future design)
             ) {
-
-                val titleState = viewModel.noteTitle.value
-                val contentState = viewModel.noteContent.value
-
                 Column {
                     TitleTextField(
                         titleState = titleState,
                         onValueChange = { viewModel.onEvent(AddEditNoteEvent.EnteredTitle(it)) },
-                        onFocusChange = { viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it)) }
+                        onFocusChange = { viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it)) },
+                        modifier = Modifier.focusRequester(titleFocusRequester)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     ContentTextField(
                         contentState = contentState,
                         onValueChange = { viewModel.onEvent(AddEditNoteEvent.EnteredContent(it)) },
-                        onFocusChange = {
-                            viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it))
-                        }
+                        onFocusChange = { viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it)) },
                     )
                 }
             }
 
-
             Spacer(modifier = Modifier.height(16.dp))
+
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.notes) { note ->
                     NoteItem(
@@ -152,8 +163,8 @@ fun NotesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                       navigator.navigate(NotesScreenDestination(note.id!!, note.parentId!!))
-//                                viewModel.onEvent(NotesEvent.ChangeParentId(note.id!!))
+                                focusManager.clearFocus()
+                                viewModel.onEvent(NotesEvent.ChangeNoteId(note.id!!))
                             },
                         onDelete = {
                             viewModel.onEvent(NotesEvent.DeleteNote(note))

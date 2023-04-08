@@ -7,15 +7,15 @@ import com.example.mynoteapp.feature_note.domain.util.OrderType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class GetNotesInteractor(
+class GetSubNotesInteractor(
     private val repository: NoteRepository
 ) {
 
     operator fun invoke(
         noteOrder: NoteOrder = NoteOrder.Date(OrderType.Descending),
-        parentId: Int?
+        noteId: Long?
     ): Flow<List<Note>> {
-        return repository.getNotes(parentId).map { notes ->
+        return repository.getSubNotes(noteId).map { notes ->
             when (noteOrder.orderType) {
                 is OrderType.Ascending -> {
                     when (noteOrder) {

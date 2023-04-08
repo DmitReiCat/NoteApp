@@ -1,13 +1,23 @@
 package com.example.mynoteapp.feature_note.presentation.notes.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.DragIndicator
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,8 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.compose.AppTheme
 import com.example.mynoteapp.feature_note.domain.model.Note
-import com.example.mynoteapp.ui.theme.MyApplicationTheme
 
 @Composable
 fun NoteItem(
@@ -32,10 +42,10 @@ fun NoteItem(
 ) {
     val iconSize = 24.dp
 
-    Box(
+    Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(Color(note.color))
+            .clip(RoundedCornerShape(cornerRadius)),
+        tonalElevation = 1.dp
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,7 +117,7 @@ fun ListIconButton(
 @Preview
 @Composable
 fun previewNoteItem() {
-    MyApplicationTheme {
+    AppTheme {
         NoteItem(
             note = Note(
                 id = null,

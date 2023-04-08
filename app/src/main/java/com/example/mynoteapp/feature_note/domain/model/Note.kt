@@ -1,10 +1,10 @@
 package com.example.mynoteapp.feature_note.domain.model
 
+import android.graphics.Color
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.mynoteapp.ui.theme.*
-import java.lang.Exception
+
 @Entity
 data class Note(
     @ColumnInfo(name = "title")
@@ -17,7 +17,7 @@ data class Note(
     val color: Int,
 
     @ColumnInfo(name = "parentId")
-    val parentId: Int? = null,
+    val parentId: Long? = null,
     @ColumnInfo(name = "childCount", defaultValue = "0")
     val childCount: Int = 0,
     @ColumnInfo(name = "childDoneCount", defaultValue = "0")
@@ -25,10 +25,18 @@ data class Note(
     @ColumnInfo(name = "isDone")
     val isDone: Boolean? = false,
     @PrimaryKey @ColumnInfo(name = "id")
-    val id: Int? = null
+    val id: Long? = null
 ) {
     companion object {
-        val noteColors = listOf(RedOrange, LightGreen, Violet, BabyBlue, RedPink)
+        //TODO(remove )
+        val noteColors = listOf<Color>()
+
+        fun getEmptyNote() = Note(
+            title = "",
+            content = "",
+            timestamp = System.currentTimeMillis(),
+            color = Color.WHITE
+        )
     }
 }
 

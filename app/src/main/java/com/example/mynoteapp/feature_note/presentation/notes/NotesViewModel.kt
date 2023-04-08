@@ -1,9 +1,8 @@
 package com.example.mynoteapp.feature_note.presentation.notes
 
-import android.util.Log
+import android.graphics.Color
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,11 +10,7 @@ import com.example.mynoteapp.feature_note.domain.model.InvalidNoteException
 import com.example.mynoteapp.feature_note.domain.model.Note
 import com.example.mynoteapp.feature_note.domain.use_case.NoteUseCases
 import com.example.mynoteapp.feature_note.domain.util.NoteOrder
-import com.example.mynoteapp.feature_note.domain.util.OrderType
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.AddEditNoteEvent
-import com.example.mynoteapp.feature_note.presentation.add_edit_note.NoteTextFieldState
 import com.example.mynoteapp.feature_note.presentation.destinations.NotesScreenDestination
-import com.example.mynoteapp.ui.theme.RedOrange
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,13 +26,12 @@ class NotesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val parentStack = ArrayDeque<Int>()
+    //TODO(make database calls not from viewModelScope))
+
+    private val navigationIdStack = ArrayDeque<Long>()
 
     private val _state = mutableStateOf(NotesState())
     val state: State<NotesState> = _state
-    private var recentlyDeletedNote: Note? = null
-
-    private var getNotesJob: Job? = null
 
     private val _noteTitle = mutableStateOf(
         NoteTextFieldState(
@@ -53,95 +47,81 @@ class NotesViewModel @Inject constructor(
     )
     val noteContent: State<NoteTextFieldState> = _noteContent
 
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
+    private val _eventFlow = MutableSharedFlow<UiEvent>(replay = 1)
     val eventFlow = _eventFlow.asSharedFlow()
-
-    private var currentNoteId: Int? = null
+    private var notesJob: Job? = null
 
     private var currentNote: Note? = null
-
+    private var recentlyDeletedNote: Note? = null
 
 
     init {
         val args = NotesScreenDestination.argsFrom(savedStateHandle)
-        if (args.noteId != -1) {
-            viewModelScope.launch {
-                noteUseCases.getNote(args.noteId)?.also { note ->
-                    currentNoteId = note.id
-                    currentNote = note
-                    _noteTitle.value = noteTitle.value.copy(
-                        text = note.title,
-                        isHintVisible = false
-                    )
-                    _noteContent.value = noteContent.value.copy(
-                        text = note.content,
-                        isHintVisible = note.content.isBlank()
-                    )
-                }
-                getNotes(NoteOrder.Date(OrderType.Descending))
-            }
-        }
-        savedStateHandle.get<Int>("noteId")?.let { noteId ->
-
-        }
-
+        if (args.noteId == -1L) createAndLoadNote()
+        else loadNote(args.noteId)
     }
-
+    //TODO(make functions for each event)
     fun onEvent(event: NotesEvent) {
         when (event) {
             is NotesEvent.Order -> {
-                if (state.value.noteOrder::class == event.noteOrder::class &&
-                    state.value.noteOrder.orderType == event.noteOrder.orderType
-                ) {
-                    return
-                }
-                getNotes(event.noteOrder)
+                if (state.value.noteOrder::class != event.noteOrder::class ||
+                    state.value.noteOrder.orderType != event.noteOrder.orderType
+                ) loadSubNotes(currentNote!!.id, event.noteOrder)
             }
+
             is NotesEvent.DeleteNote -> {
                 viewModelScope.launch {
                     noteUseCases.deleteNote(event.note)
                     recentlyDeletedNote = event.note
                 }
             }
+
             NotesEvent.RestoreNote -> {
                 viewModelScope.launch {
-                    noteUseCases.addNote(recentlyDeletedNote ?: return@launch)
+                    noteUseCases.saveNote(recentlyDeletedNote ?: return@launch)
                     recentlyDeletedNote = null
                 }
             }
+
             NotesEvent.ToggleOrderSection -> {
                 _state.value = state.value.copy(
                     isOrderSelectionVisible = !state.value.isOrderSelectionVisible
                 )
             }
-            is NotesEvent.ChangeParentId -> {
+
+            is NotesEvent.ChangeNoteId -> {
                 if (currentNote != null) saveCurrentNote()
-                parentStack.addLast(event.parentId)
+                navigationIdStack.addLast(currentNote!!.id!!)
                 _state.value = state.value.copy(
-                    parentId = event.parentId,
+                    parentId = currentNote!!.id,
                     isTopLevel = false
                 )
-                currentNoteId = event.parentId
-                currentNoteId?.let { loadEditableNote(it) } //TODO()
-                getNotes(NoteOrder.Date(OrderType.Descending))
+                loadNote(event.noteId)
             }
+
             NotesEvent.OnBackPressed -> {
                 if (currentNote != null) saveCurrentNote()
-                currentNoteId = parentStack.removeLast()
+                val nextNoteId = navigationIdStack.removeLast()
                 _state.value = state.value.copy(
-                    parentId = parentStack.last(),
-                    isTopLevel = parentStack.size == 1
+                    parentId = navigationIdStack.lastOrNull(),
+                    isTopLevel = navigationIdStack.size == 0
                 )
-                currentNoteId?.let { loadEditableNote(it) }
-                getNotes(NoteOrder.Date(OrderType.Descending))
+                loadNote(nextNoteId)
             }
+            // TODO(WIP quick edit for notes)
             is NotesEvent.ToggleBottomSheet -> {
-                if (!state.value.openBottomSheet) {
-                    loadEditableNote(event.noteId)
-                } else currentNoteId = null
-                _state.value = state.value.copy(
-                    openBottomSheet = !state.value.openBottomSheet
-                )
+                // TODO(rewrite the logic to not mess up with fullscreen edit)
+//                if (!state.value.openBottomSheet) {
+//                    loadNote(event.noteId)
+//                } else currentNoteId = null
+//                _state.value = state.value.copy(
+//                    openBottomSheet = !state.value.openBottomSheet
+//                )
+            }
+
+            NotesEvent.CreateNewNote -> {
+                saveCurrentNote()
+                createAndLoadNote()
             }
         }
     }
@@ -151,6 +131,7 @@ class NotesViewModel @Inject constructor(
             is AddEditNoteEvent.ChangeTitleFocus -> _noteTitle.value = noteTitle.value.copy(
                 isHintVisible = !event.focusState.isFocused && noteTitle.value.text.isBlank()
             )
+
             is AddEditNoteEvent.EnteredTitle -> _noteTitle.value = noteTitle.value.copy(
                 text = event.value
             )
@@ -158,6 +139,7 @@ class NotesViewModel @Inject constructor(
             is AddEditNoteEvent.ChangeContentFocus -> _noteContent.value = noteContent.value.copy(
                 isHintVisible = !event.focusState.isFocused && noteContent.value.text.isBlank()
             )
+
             is AddEditNoteEvent.EnteredContent -> _noteContent.value = noteContent.value.copy(
                 text = event.value
             )
@@ -168,32 +150,21 @@ class NotesViewModel @Inject constructor(
         }
     }
 
-    private fun loadEditableNote(noteId: Int) {
-        if (noteId != -1) {
-            viewModelScope.launch {
-                noteUseCases.getNote(noteId)?.also { note ->
-                    currentNoteId = note.id
-                    currentNote = note
-                    _noteTitle.value = noteTitle.value.copy(
-                        text = note.title,
-                        isHintVisible = false
-                    )
-                    _noteContent.value = noteContent.value.copy(
-                        text = note.content,
-                        isHintVisible = false
-                    )
-                }
+    private fun loadNote(noteId: Long) {
+        viewModelScope.launch {
+            noteUseCases.getNote(noteId)?.let { note ->
+                currentNote = note
+                _noteTitle.value = noteTitle.value.copy(
+                    text = note.title,
+                    isHintVisible = false,
+                )
+                _noteContent.value = noteContent.value.copy(
+                    text = note.content,
+                    isHintVisible = note.content.isBlank(),
+                )
             }
-        } else {
-            currentNoteId = null
-            currentNote = null
-            _noteTitle.value = noteTitle.value.copy(
-                isHintVisible = true
-            )
-            _noteContent.value = noteContent.value.copy(
-                isHintVisible = true
-            )
         }
+        loadSubNotes(noteId, NoteOrder.DEFAULT)
     }
 
     private fun saveCurrentNote() {
@@ -202,7 +173,7 @@ class NotesViewModel @Inject constructor(
                 currentNote?.copy(
                     title = noteTitle.value.text,
                     content = noteContent.value.text
-                )?.let { noteUseCases.addNote(it) }
+                )?.let { noteUseCases.saveNote(it) }
             } catch (e: InvalidNoteException) {
                 _eventFlow.emit(
                     UiEvent.ShowSnackBar(
@@ -213,35 +184,34 @@ class NotesViewModel @Inject constructor(
         }
     }
 
-    private fun addNewNote() {
+    private fun createAndLoadNote() {
         viewModelScope.launch {
-            try {
-                noteUseCases.addNote(
-                    Note(
-                        title = noteTitle.value.text,
-                        content = noteContent.value.text,
-                        timestamp = System.currentTimeMillis(),
-                        color = RedOrange.toArgb(),
-                        id = currentNoteId,
-                        parentId = state.value.parentId
-                    )
+            val createdId = noteUseCases.createNote(
+                Note(
+                    title = "",
+                    content = "",
+                    timestamp = System.currentTimeMillis(),
+                    color = Color.WHITE,
+                    parentId = currentNote?.id
                 )
-            } catch (e: InvalidNoteException) {
-                _eventFlow.emit(
-                    UiEvent.ShowSnackBar(
-                        message = e.message ?: "Unknown error, couldn't save note"
-                    )
+            )
+            currentNote?.id?.let {
+                navigationIdStack.addLast(it)
+                _state.value = state.value.copy(
+                    parentId = it,
+                    isTopLevel = false
                 )
             }
+            loadNote(createdId)
+            _eventFlow.emit(UiEvent.RequestTitleFocus)
         }
     }
 
 
-    private fun getNotes(noteOrder: NoteOrder) {
-        getNotesJob?.cancel()
-        getNotesJob = noteUseCases.getNotes(noteOrder, parentId = currentNoteId)
+    private fun loadSubNotes(noteId: Long?, noteOrder: NoteOrder) {
+        notesJob?.cancel()
+        notesJob = noteUseCases.getSubNotes(noteOrder, noteId = noteId)
             .onEach { notes ->
-                Log.d("NOTE_APP", "got in vm: $notes")
                 _state.value = state.value.copy(
                     notes = notes,
                     noteOrder = noteOrder,
@@ -252,7 +222,7 @@ class NotesViewModel @Inject constructor(
 
     sealed class UiEvent {
         data class ShowSnackBar(val message: String) : UiEvent()
+        object RequestTitleFocus : UiEvent()
 
     }
-
 }

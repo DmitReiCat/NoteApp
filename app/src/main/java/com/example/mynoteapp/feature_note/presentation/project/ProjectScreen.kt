@@ -1,8 +1,6 @@
 package com.example.mynoteapp.feature_note.presentation.project
 
 import android.annotation.SuppressLint
-import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,23 +11,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.example.mynoteapp.feature_note.presentation.destinations.NotesScreenDestination
 import com.example.mynoteapp.feature_note.presentation.notes.components.NoteItem
 import com.example.mynoteapp.feature_note.presentation.project.components.OrderSection
-import com.example.mynoteapp.feature_note.presentation.util.Screen
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
 @RootNavGraph(start = true)
 @Destination
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -49,7 +44,7 @@ fun ProjectScreen(
             FloatingActionButton(
                 onClick = {
 //                    viewModel.onEvent(NotesEvent.ChangeParentId(-1))
-                    navigator.navigate(NotesScreenDestination(noteId = -1, parentId = -1))
+                    navigator.navigate(NotesScreenDestination(noteId = -1L, parentId = -1L))
                 },
                 shape = MaterialTheme.shapes.large,
                 contentColor = MaterialTheme.colorScheme.primary
