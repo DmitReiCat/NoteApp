@@ -12,12 +12,15 @@ import com.example.mynoteapp.feature_note.domain.use_case.NoteUseCases
 import com.example.mynoteapp.feature_note.domain.util.NoteOrder
 import com.example.mynoteapp.feature_note.presentation.destinations.NotesScreenDestination
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,6 +57,8 @@ class NotesViewModel @Inject constructor(
     private var currentNote: Note? = null
     private var recentlyDeletedNote: Note? = null
 
+    val scope = viewModelScope + Dispatchers.Default
+
 
     init {
         val args = NotesScreenDestination.argsFrom(savedStateHandle)
@@ -70,14 +75,14 @@ class NotesViewModel @Inject constructor(
             }
 
             is NotesEvent.DeleteNote -> {
-                viewModelScope.launch {
+                scope.launch {
                     noteUseCases.deleteNote(event.note)
                     recentlyDeletedNote = event.note
                 }
             }
 
             NotesEvent.RestoreNote -> {
-                viewModelScope.launch {
+                scope.launch {
                     noteUseCases.saveNote(recentlyDeletedNote ?: return@launch)
                     recentlyDeletedNote = null
                 }
@@ -151,7 +156,7 @@ class NotesViewModel @Inject constructor(
     }
 
     private fun loadNote(noteId: Long) {
-        viewModelScope.launch {
+        scope.launch {
             noteUseCases.getNote(noteId)?.let { note ->
                 currentNote = note
                 _noteTitle.value = noteTitle.value.copy(
@@ -168,7 +173,7 @@ class NotesViewModel @Inject constructor(
     }
 
     private fun saveCurrentNote() {
-        viewModelScope.launch {
+        scope.launch {
             try {
                 currentNote?.copy(
                     title = noteTitle.value.text,
@@ -185,7 +190,7 @@ class NotesViewModel @Inject constructor(
     }
 
     private fun createAndLoadNote() {
-        viewModelScope.launch {
+        scope.launch {
             val createdId = noteUseCases.createNote(
                 Note(
                     title = "",
@@ -207,6 +212,34 @@ class NotesViewModel @Inject constructor(
         }
     }
 
+    //TODO (For future fragmentation)
+    private suspend fun getNewNoteId(): Long =
+        withContext(scope.coroutineContext) {
+            val noteId = noteUseCases.createNote(
+                Note(
+                    title = "",
+                    content = "",
+                    timestamp = System.currentTimeMillis(),
+                    color = Color.WHITE,
+                    parentId = currentNote?.id
+                )
+            )
+            noteId
+        }
+
+
+    private fun Note.addToNavStack() {
+        this.id?.let {
+            navigationIdStack.addLast(it)
+            _state.value = state.value.copy(
+                parentId = it,
+                isTopLevel = false
+            )
+        }
+    }
+
+
+
 
     private fun loadSubNotes(noteId: Long?, noteOrder: NoteOrder) {
         notesJob?.cancel()
@@ -217,7 +250,7 @@ class NotesViewModel @Inject constructor(
                     noteOrder = noteOrder,
                 )
             }
-            .launchIn(viewModelScope)
+            .launchIn(scope)
     }
 
     sealed class UiEvent {

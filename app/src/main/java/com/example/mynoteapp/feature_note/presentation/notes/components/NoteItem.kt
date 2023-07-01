@@ -38,14 +38,16 @@ fun NoteItem(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 10.dp,
     cutCornerSize: Dp = 30.dp,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     onDelete: () -> Unit
+
 ) {
     val iconSize = 24.dp
 
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius)),
-        tonalElevation = 1.dp
+        tonalElevation = 5.dp
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -56,41 +58,41 @@ fun NoteItem(
                 .padding(start = 0.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
 //                .background(Color.Blue)
         ) {
-            ListIconButton(onClick = { /*TODO*/ }) {
+            NoteIconButton(onClick = { /*TODO*/ }) {
                 Icon(
                     modifier = Modifier.size(iconSize),
-                    tint = MaterialTheme.colorScheme.background,
-                    imageVector = Icons.Rounded.DragIndicator,
-                    contentDescription = "Delete note"
-                )
-            }
-            ListIconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    modifier = Modifier.size(iconSize),
-                    tint = MaterialTheme.colorScheme.background,
+                    tint = contentColor,
                     imageVector = Icons.Rounded.ExpandMore,
                     contentDescription = "Delete note"
                 )
             }
-            Spacer(Modifier.width(iconSize / 2))
+//            Spacer(Modifier.width(iconSize / 2))
             Column(
                 modifier = Modifier
 //                    .background(Color.Green)
                     .weight(1f)
             ) {
                 Text(
-                    text = note.title + " \n// debug: id= ${ note.id }",
+                    text = note.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "// debug: id= ${note.id}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = contentColor,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
             }
-            ListIconButton(onClick = onDelete) {
+//            Spacer(Modifier.width(iconSize / 2))
+            NoteIconButton(onClick = onDelete) {
                 Icon(
                     modifier = Modifier.size(iconSize),
-                    tint = MaterialTheme.colorScheme.background,
+                    tint = contentColor,
                     imageVector = Icons.Rounded.RadioButtonUnchecked,
                     contentDescription = "Delete note"
                 )
@@ -100,7 +102,7 @@ fun NoteItem(
 }
 
 @Composable
-fun ListIconButton(
+fun NoteIconButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -109,7 +111,8 @@ fun ListIconButton(
         onClick = onClick,
         modifier = Modifier
 //                    .background(Color.Red)
-            .size(iconSize * 1.5f),
+//            .size(iconSize * 1.5f),
+            .size(iconSize * 2.0f),
         content = content
     )
 }
@@ -130,7 +133,8 @@ fun previewNoteItem() {
                 timestamp = 120,
                 title = "My title"
             ),
-            modifier = Modifier.height(150.dp)
-        ) { /* do nothing */ }
+            modifier = Modifier.height(150.dp), // TODO(What the fuck)
+            onDelete = { Unit }
+        )
     }
 }

@@ -1,9 +1,11 @@
 package com.example.mynoteapp.feature_note.presentation.notes.components
 
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.graphics.Color
 import com.example.mynoteapp.feature_note.presentation.notes.NoteTextFieldState
 
 @Composable
@@ -19,7 +21,7 @@ fun TitleTextField(
         onValueChange = onValueChange,
         onFocusChange = onFocusChange,
         isHintVisible = titleState.isHintVisible,
-        isSingleLine = false,
+        isSingleLine = true,
         textStyle = MaterialTheme.typography.displaySmall,
         modifier = modifier
     )
